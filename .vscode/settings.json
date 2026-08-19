@@ -1,0 +1,23 @@
+{
+  "tailwindCSS.includeLanguages": {
+    "html": "html",
+    "xml": "html",
+    "dart": "html"
+  },
+  "tailwindCSS.classAttributes": [
+    "class",
+    "className",
+    "ngClass",
+    "class:list",
+    "classes",
+    "b:class",
+    "expr:class",
+    ".*class",
+    ".*Class"
+  ],
+  "tailwindCSS.experimental.classRegex": [
+    "\\W\\s*(?:expr:|b:)?classes?:\\s*'(.*)'",
+    "\\W\\s*(?:expr:|b:)?classes?:\\s*\"([^\"]*)\"",
+    "b:attr[^\n]*?value:\\s*['\"]([^'\"]*)['\"]"
+  ]
+}

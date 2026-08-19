@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "build": "npx postcss ./lib/input.css -o ./lib/output.css --minify",
+    "watch": "npx postcss ./lib/input.css -o ./lib/output.css --watch"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "postcss": "^8.5.26",
+    "postcss-cli": "^11.0.0",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "cssnano": "^8.0.6",
+    "postcss-nested": "^8.0.1"
+  }
+}
