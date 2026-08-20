@@ -9,6 +9,7 @@ export const sharedConfig: UserConfig = {
   content: {
     filesystem: sharedContent,
   },
+
   presets: [presetWind3()],
   rules: [["m-1", { margin: "1px" }]],
   safelist: ["m-1"],
