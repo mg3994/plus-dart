@@ -120,9 +120,10 @@ final Component plusUiTemplate = Fragment([
                           ],
                         ),
                         BElse(),
-                        const h1([
-                          Component.text('AMP / Non-AMP Tricking System'),
-                        ]),
+                        const h1(
+                          [Component.text('AMP / Non-AMP Tricking System')],
+                          attributes: {'class': "m-1"},
+                        ),
                         const p([
                           Component.text(
                             'Template updated cleanly without trailing artifacts.',

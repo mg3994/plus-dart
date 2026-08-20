@@ -1,11 +1,11 @@
 {
   "scripts": {
     "build": "npm run build:amp && npm run build:noamp",
-    "build:amp": "unocss \"lib/**/*.{dart,html,xml}\" -c uno.config.ts -o lib/amp/output.css",
-    "build:noamp": "unocss \"lib/**/*.{dart,html,xml}\" -c uno.config.ts -o lib/noamp/output.css",
+    "build:amp": "unocss \"lib/plus_trick.dart\" \"lib/shared/**/*.{dart,html,xml}\" \"lib/amp/**/*.{dart,html,xml}\" -c uno.amp.config.ts -o lib/amp/output.css",
+    "build:noamp": "unocss \"lib/plus_trick.dart\" \"lib/shared/**/*.{dart,html,xml}\" \"lib/noamp/**/*.{dart,html,xml}\" -c uno.noamp.config.ts -o lib/noamp/output.css",
     "watch": "concurrently --kill-others-on-fail \"npm run watch:amp\" \"npm run watch:noamp\"",
-    "watch:amp": "unocss \"lib/**/*.{dart,html,xml}\" -c uno.config.ts -o lib/amp/output.css --watch",
-    "watch:noamp": "unocss \"lib/**/*.{dart,html,xml}\" -c uno.config.ts -o lib/noamp/output.css --watch"
+    "watch:amp": "unocss \"lib/plus_trick.dart\" \"lib/shared/**/*.{dart,html,xml}\" \"lib/amp/**/*.{dart,html,xml}\" -c uno.amp.config.ts -o lib/amp/output.css --watch",
+    "watch:noamp": "unocss \"lib/plus_trick.dart\" \"lib/shared/**/*.{dart,html,xml}\" \"lib/noamp/**/*.{dart,html,xml}\" -c uno.noamp.config.ts -o lib/noamp/output.css --watch"
   },
   "devDependencies": {
     "@unocss/cli": "^66.8.0",
