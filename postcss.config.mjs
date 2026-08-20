@@ -1,83 +1,232 @@
 import tailwindcss from "@tailwindcss/postcss";
 import postcssNested from "postcss-nested";
-import cssnano from "cssnano";
+import CleanCSS from "clean-css";
+
+function ampSanitizer() {
+  return {
+    postcssPlugin: "postcss-amp-sanitizer",
+
+    Once(root) {
+      /*
+       * ------------------------------------------------------------
+       * 1. Remove unsupported at-rules
+       * ------------------------------------------------------------
+       */
+
+      root.walkAtRules((rule) => {
+        const name = rule.name.toLowerCase();
+
+        if (name === "supports" || name === "property" || name === "layer") {
+          if (name === "layer" && rule.nodes?.length) {
+            rule.replaceWith(...rule.nodes);
+          } else {
+            rule.remove();
+          }
+
+          return;
+        }
+
+        /*
+         * AMP allows media queries, but we normalize
+         * Tailwind v4's range syntax below.
+         */
+
+        if (name === "media") {
+          rule.params = normalizeMediaQuery(rule.params);
+          return;
+        }
+
+        /*
+         * Keep keyframes.
+         */
+        if (
+          name === "keyframes" ||
+          name === "-webkit-keyframes" ||
+          name === "font-face"
+        ) {
+          return;
+        }
+
+        /*
+         * Remove all other at-rules.
+         */
+        rule.remove();
+      });
+
+      /*
+       * ------------------------------------------------------------
+       * 2. Normalize media queries
+       * ------------------------------------------------------------
+       */
+
+      root.walkAtRules("media", (rule) => {
+        rule.params = normalizeMediaQuery(rule.params);
+      });
+
+      /*
+       * ------------------------------------------------------------
+       * 3. Remove !important
+       * ------------------------------------------------------------
+       */
+
+      root.walkDecls((decl) => {
+        if (decl.important) {
+          decl.important = false;
+        }
+
+        decl.value = decl.value.replace(/\s*!important\b/gi, "");
+      });
+
+      /*
+       * ------------------------------------------------------------
+       * 4. Remove AMP internal selectors
+       * ------------------------------------------------------------
+       */
+
+      root.walkRules((rule) => {
+        const selector = rule.selector;
+
+        if (/(?:^|[\s,>+~])(?:-amp-|i-amp)/i.test(selector)) {
+          rule.remove();
+        }
+      });
+
+      /*
+       * ------------------------------------------------------------
+       * 5. Remove unsupported Tailwind selectors
+       *
+       * AMP's CSS parser is stricter than a browser.
+       * ------------------------------------------------------------
+       */
+
+      root.walkRules((rule) => {
+        let selector = rule.selector;
+
+        /*
+         * Remove pseudo selectors that AMP's CSS validator
+         * commonly rejects.
+         */
+
+        selector = selector
+          .replace(/::backdrop\b/gi, "")
+          .replace(/::file-selector-button\b/gi, "")
+          .replace(/:host\b/gi, "");
+
+        /*
+         * Remove empty selector fragments.
+         */
+
+        selector = selector
+          .replace(/,\s*,/g, ",")
+          .replace(/^\s*,|,\s*$/g, "")
+          .trim();
+
+        if (!selector) {
+          rule.remove();
+          return;
+        }
+
+        rule.selector = selector;
+      });
+
+      /*
+       * ------------------------------------------------------------
+       * 6. Remove empty rules
+       * ------------------------------------------------------------
+       */
+
+      root.walkRules((rule) => {
+        if (!rule.nodes?.length) {
+          rule.remove();
+        }
+      });
+
+      root.walkAtRules((rule) => {
+        if (!rule.nodes?.length) {
+          rule.remove();
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Convert Tailwind v4 media range syntax:
+ *
+ *   (width >= 40rem)
+ *   (width > 40rem)
+ *   (width <= 40rem)
+ *   (width < 40rem)
+ *
+ * into traditional media syntax.
+ */
+function normalizeMediaQuery(params) {
+  return params
+    .replace(
+      /\(\s*width\s*>=\s*([0-9.]+(?:px|rem|em|ch|vw|vh|%))\s*\)/gi,
+      "(min-width: $1)",
+    )
+    .replace(
+      /\(\s*width\s*>\s*([0-9.]+(?:px|rem|em|ch|vw|vh|%))\s*\)/gi,
+      "(min-width: $1)",
+    )
+    .replace(
+      /\(\s*width\s*<=\s*([0-9.]+(?:px|rem|em|ch|vw|vh|%))\s*\)/gi,
+      "(max-width: $1)",
+    )
+    .replace(
+      /\(\s*width\s*<\s*([0-9.]+(?:px|rem|em|ch|vw|vh|%))\s*\)/gi,
+      "(max-width: $1)",
+    );
+}
+
+const cleanCssPlugin = () => {
+  return {
+    postcssPlugin: "postcss-clean-css",
+
+    OnceExit(root, { result }) {
+      /*
+       * IMPORTANT:
+       *
+       * Use CleanCSS only for minification.
+       *
+       * Do NOT use Level 2 restructuring because it can
+       * rewrite already-sanitized AMP CSS.
+       */
+
+      const minified = new CleanCSS({
+        level: 1,
+      }).minify(result.css);
+
+      if (minified.errors.length > 0) {
+        throw new Error(minified.errors.join("\n"));
+      }
+
+      result.css = minified.styles;
+    },
+  };
+};
 
 export default {
   plugins: [
+    /*
+     * Tailwind v4
+     */
     tailwindcss(),
-    // 1. Safely unwrap and bubble Tailwind v4's nested @media and @supports to the root level
+
+    /*
+     * Flatten nested CSS.
+     */
     postcssNested(),
-    {
-      postcssPlugin: "postcss-amp-sanitizer",
-      Once(root) {
-        // 2. Remove Tailwind comment banners
-        root.walkComments((comment) => {
-          if (comment.text.includes("tailwindcss")) {
-            comment.remove();
-          }
-        });
 
-        // 3. Strip !important flags from declarations
-        root.walkDecls((declaration) => {
-          declaration.important = false;
-          declaration.value = declaration.value
-            .replace(/!important\b/gi, "")
-            .trim();
-        });
+    /*
+     * AMP sanitization.
+     */
+    ampSanitizer(),
 
-        // 4. Remove disallowed AMP at-rules (AMP only accepts media, supports, keyframes, font-face)
-        root.walkAtRules((atRule) => {
-          const name = atRule.name.toLowerCase();
-          if (!["media", "supports", "keyframes", "font-face"].includes(name)) {
-            atRule.remove();
-          }
-        });
-
-        // 5. Remove restricted AMP internal selectors (-amp, i-amp)
-        root.walkRules(/\.-amp-|^i-amp|\si-amp/, (rule) => {
-          rule.remove();
-        });
-
-        // 6. Remove disallowed properties & restrict transitions to GPU-accelerated ones
-        root.walkDecls((decl) => {
-          const prop = decl.prop.toLowerCase();
-          const isForbiddenProp =
-            prop === "behavior" || prop === "-moz-binding";
-          const isInvalidTransition =
-            prop === "transition" && !/opacity|transform/.test(decl.value);
-
-          if (isForbiddenProp || isInvalidTransition) {
-            const parent = decl.parent;
-            decl.remove();
-            if (parent && parent.nodes.length === 0) {
-              parent.remove();
-            }
-          }
-        });
-
-        // 7. Clean up any empty rules or at-rules left behind
-        root.walkRules((rule) => {
-          if (!rule.nodes || rule.nodes.length === 0) {
-            rule.remove();
-          }
-        });
-        root.walkAtRules((atRule) => {
-          if (!atRule.nodes || atRule.nodes.length === 0) {
-            atRule.remove();
-          }
-        });
-      },
-    },
-
-    // 8. Minify tightly to stay safely under AMP's 50KB limit
-    cssnano({
-      preset: [
-        "default",
-        {
-          discardComments: { removeAll: true },
-          normalizeWhitespace: true,
-        },
-      ],
-    }),
+    /*
+     * Final minification.
+     */
+    cleanCssPlugin(),
   ],
 };
