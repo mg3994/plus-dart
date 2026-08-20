@@ -1,17 +1,15 @@
 {
   "scripts": {
-    "build": "npx postcss ./lib/input.css -o ./lib/output.css --minify",
-    "watch": "npx postcss ./lib/input.css -o ./lib/output.css --watch"
-  },
-  "dependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
-    "postcss": "^8.5.26",
-    "postcss-cli": "^11.0.0",
-    "tailwindcss": "^4.3.3"
+    "build": "npm run build:amp && npm run build:noamp",
+    "build:amp": "unocss \"lib/**/*.{dart,html,xml}\" -c uno.config.ts -o lib/amp/output.css",
+    "build:noamp": "unocss \"lib/**/*.{dart,html,xml}\" -c uno.config.ts -o lib/noamp/output.css",
+    "watch": "concurrently --kill-others-on-fail \"npm run watch:amp\" \"npm run watch:noamp\"",
+    "watch:amp": "unocss \"lib/**/*.{dart,html,xml}\" -c uno.config.ts -o lib/amp/output.css --watch",
+    "watch:noamp": "unocss \"lib/**/*.{dart,html,xml}\" -c uno.config.ts -o lib/noamp/output.css --watch"
   },
   "devDependencies": {
-    "clean-css": "^5.3.3",
-    "cssnano": "^8.0.6",
-    "postcss-nested": "^8.0.1"
+    "@unocss/cli": "^66.8.0",
+    "concurrently": "^10.0.5",
+    "unocss": "^66.8.0"
   }
 }
