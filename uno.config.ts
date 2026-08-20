@@ -11,7 +11,10 @@ export const sharedConfig: UserConfig = {
   },
 
   presets: [presetWind3()],
-  rules: [["m-1", { margin: "1px" }]],
+  rules: [
+    [/^m-([\.\d]+)$/, ([_, num]) => ({ margin: `${num}px` })],
+    [/^p-([.\d]+)$/, ([_, num]) => ({ padding: `${num}px` })],
+  ],
   safelist: ["m-1"],
 };
 

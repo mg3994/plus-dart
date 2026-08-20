@@ -1,4 +1,9 @@
 /* layer: default */
 .hidden{display:none;}
+.bg-gray-200{--un-bg-opacity:1;background-color:rgb(229 231 235 / var(--un-bg-opacity));}
+.text-gray-500{--un-text-opacity:1;color:rgb(107 114 128 / var(--un-text-opacity));}
+.text-white{--un-text-opacity:1;color:rgb(255 255 255 / var(--un-text-opacity));}
+.c-yellow{--un-text-opacity:1;color:rgb(250 204 21 / var(--un-text-opacity));}
 .m-1{margin:1px;}
+.m-20{margin:20px;}
 .amp-layout{display:block;}

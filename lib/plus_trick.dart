@@ -59,6 +59,7 @@ final Component plusUiTemplate = Fragment([
           ),
           body([
             BSection(
+              className: 'm-20 c-yellow   bg-primary text-white bg-gray-200 text-gray-500',
               id: 'main',
               showaddelement: false,
               children: [
